@@ -1,19 +1,48 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    {{count}}
+    <button v-stream:click="plus$">+</button>
+    <div>{{increment}}</div>
+    <ChieldComponent v-stream:increment="{subject: plusFromChield$}"></ChieldComponent>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
+import ChieldComponent from "./components/ChieldButton";
+import { Subject } from "rxjs";
+import { map, startWith, scan } from "rxjs/operators";
 export default {
-  name: 'App',
+  name: "App",
   components: {
-    HelloWorld
+    ChieldComponent
+  },
+  methods: {
+    // increment() {
+    //   console.log("clicked");
+    //   this.plus$.next();
+    // }
+  },
+  subscriptions() {
+    // declare the receiving Subjects
+    this.plus$ = new Subject();
+    this.plusFromChield$ = new Subject();
+    // ...then create subscriptions using the Subjects as source stream.
+    // the source stream emits in the format of `{ event: HTMLEvent, data?: any }`
+    return {
+      count: this.plus$.pipe(
+        map(() => 2),
+        startWith(10),
+        scan((total, change) => total + change)
+      ),
+      increment: this.plusFromChield$.pipe(
+        map(val => {
+          console.log(val);
+          return val.event.msg;
+        })
+      )
+    };
   }
-}
+};
 </script>
 
 <style>
